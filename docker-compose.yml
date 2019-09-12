@@ -1,0 +1,63 @@
+version: '2'
+services:
+  consul:
+    image: consul:1.0.6
+    restart: always
+    entrypoint:
+      - consul
+    command:
+      - agent
+      - -client=0.0.0.0
+      - -data-dir=/consul/data
+      - -dev
+    volumes:
+      - consul-data:/consul/data:rw
+    expose:
+      - '8500'
+    ports:
+      - '8500:8500'
+  nats:
+    image: nats:1.0.4
+    restart: always
+    command:
+      - -a=0.0.0.0
+      - -m=8222
+      - -DV
+    expose:
+      - '4222'
+    ports:
+      - '4222:4222'
+      - '8222:8222'
+  micro-api:
+    # Maybe use microhq/micro
+    image: quay.io/profects/micro:latest
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - MICRO_API_NAMESPACE=go.micro.api
+      - MICRO_API_HANDLER=proxy
+      # - MICRO_API_HANDLER=api
+    command:
+      - api
+    network_mode: host
+    cpu_shares: 256
+    #ports:
+    #  - "8080:8080"
+    expose:
+       - 8080
+  greeter-api:
+    image: quay.io/profects/greeter-example-api
+    env_file:
+      - .env
+    network_mode: host    
+  greeter-srv:
+    image: quay.io/profects/greeter-example-srv
+    env_file:
+      - .env
+    network_mode: host    
+volumes:
+  consul-data:
+    driver: local
+  crate-data:
+    driver: local
